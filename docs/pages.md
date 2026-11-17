@@ -2,6 +2,8 @@
 
 The static site starts at `docs/index.html`. It includes the original measured waveforms, an interactive stem plot of the AI-selected differential input, and expandable model responses for all 12 experiments plus the final stop call. The +43 mV fixed series offset is labeled separately from the model-controlled stimulus.
 
+Published demonstration: [jasonpjacobs.github.io/strongarm-agent-sim](https://jasonpjacobs.github.io/strongarm-agent-sim/). Source: [jasonpjacobs/strongarm-agent-sim](https://github.com/jasonpjacobs/strongarm-agent-sim).
+
 ## Preview locally
 
 Open `docs/index.html` in a browser. All assets are local; no simulator, PDK, model account, Node installation or build step is required. Alternatively, from the repository root:

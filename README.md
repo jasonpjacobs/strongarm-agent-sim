@@ -6,7 +6,7 @@ The circuit is an 11-transistor StrongArm latch using SKY130 1.8 V devices. A +4
 
 **The live AI command has no scripted stimulus policy.** Python checks bounds, validates evidence references, translates units and calls the simulator. A separate `recorded` command reuses decisions from the original demonstration and is explicitly labeled as having no fresh inference.
 
-**Interactive explainer:** open [docs/index.html](docs/index.html) in a browser to explore the original measured waveforms, stimulus stem plot and expandable model responses. It works offline with no setup. See [GitHub Pages instructions](docs/pages.md) to publish the same files from this repository's `/docs` folder.
+**[Explore the recorded experiment online](https://jasonpjacobs.github.io/strongarm-agent-sim/)**: measured waveforms, a stimulus stem plot and expandable model responses. You can also open [docs/index.html](docs/index.html) locally; it works offline with no setup. See [GitHub Pages instructions](docs/pages.md) to publish your own copy from the repository's `/docs` folder.
 
 ![StrongArm circuit](docs/circuit.png)
 
