@@ -12,11 +12,11 @@ def check(ai=False, model=None):
         raise RuntimeError('Python 3.11 or newer is required')
     if sys.platform == 'win32':
         raise RuntimeError('Use a Linux/WSL environment; native Windows is not supported by this pipe transport')
-    model = Path(require(config, 'sky130_lib'))
-    if not model.is_file():
-        raise RuntimeError(f'SKY130 library not found: {model}')
+    sky130_lib = Path(require(config, 'sky130_lib'))
+    if not sky130_lib.is_file():
+        raise RuntimeError(f'SKY130 library not found: {sky130_lib}')
     from .worker import model_hashes
-    hashes = model_hashes(model)
+    hashes = model_hashes(sky130_lib)
     library = require(config, 'ngspice_library')
     if not Path(library).is_file():
         raise RuntimeError('ngspice_library must be the full path to libngspice.so/.dylib, not the executable')
@@ -30,9 +30,17 @@ def check(ai=False, model=None):
                   model_include_files=len(hashes), solver=config['solver'],
                   plotting_available=importlib.util.find_spec('matplotlib') is not None,
                   ai_checked=ai)
-    if ai:
+    if ai and (config.get('provider') or 'codex') == 'claude':
+        from .claude_provider import check as claude_check
+        result['provider'] = 'anthropic-claude-code-cli'
+        result['claude'] = claude_check(require(config,'claude_bin'))
+        result['model'] = model or require(config,'model')
+        result['effort'] = config.get('reasoning_effort','high')
+        result['authentication'] = 'Not tested; use your normal Claude Code login (claude auth login) or ANTHROPIC_API_KEY'
+    elif ai:
         codex = require(config,'codex_bin')
         model = model or require(config,'model')
+        result['provider'] = 'openai-codex-cli'
         help_text = subprocess.check_output([codex,'exec','--help'],text=True,stderr=subprocess.STDOUT,timeout=15)
         for option in ['--output-schema','--output-last-message','--ephemeral','--ignore-user-config','--disable']:
             if option not in help_text:

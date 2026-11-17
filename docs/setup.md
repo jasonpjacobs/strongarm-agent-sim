@@ -30,9 +30,21 @@ Spaces in the repository and output paths are supported. Model paths are quoted 
 
 ## AI connection
 
+### Codex
+
 Install and authenticate the [official Codex CLI](https://learn.chatgpt.com/docs/codex/cli). Configure `--codex` and `--model` during setup. The adapter uses the [structured-output CLI pattern](https://developers.openai.com/cookbook/examples/codex/build_iterative_repair_loops_with_codex), requires the flags checked by `doctor --ai`, and was tested originally with CLI 0.163.0. It deliberately does not read the user's general Codex configuration for plugins/tools; authentication still uses the normal Codex store.
 
 `--model` must name a model available to your account. The historical model name in the example recording is not an access guarantee. Login is an explicit user step; setup and doctor never log in or request inference. No credential needs to be copied into this checkout.
+
+### Claude Code
+
+Install and log in to [Claude Code](https://code.claude.com/docs/en/overview), then run setup with `--provider claude --claude /path/to/claude --model <model> [--effort high]`. `doctor --ai` checks that the CLI has the options the adapter needs; it does not log in or call a model.
+
+Each decision is one non-interactive [print-mode run](https://code.claude.com/docs/en/headless) with `--output-format stream-json --json-schema <schema>`; the decision is read from the result's `structured_output` field and saved unchanged. The [CLI flags](https://code.claude.com/docs/en/cli-reference) used for isolation are `--tools ""`, `--strict-mcp-config --mcp-config '{"mcpServers":{}}'`, `--setting-sources ""`, `--safe-mode`, `--disable-slash-commands`, `--no-session-persistence` and `--permission-mode dontAsk`. `ai_prompt.txt` is passed as `--system-prompt`; the user turn is `CURRENT CONTEXT:` plus the JSON context. The CLI runs in an empty temporary directory with only `HOME`, `USER`, locale, `PATH`, `TMPDIR`, `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` and, when set, `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`. Variables from a parent Claude Code session are not inherited.
+
+The adapter rejects a call whose `system/init` event reports any tool other than the CLI's `StructuredOutput` return tool, any MCP server, skill or slash command, a missing `structured_output`, an error result, or a runtime model different from a requested full `claude-*` model ID. Such failures end the run; nothing substitutes a stimulus. Each `call-*/` folder keeps the system prompt, user turn, the full CLI event stream, `runtime.json` (model, durations, token usage and CLI-reported cost) and `response.json`.
+
+Residual context: with an OAuth (subscription) login, Claude Code still adds the signed-in account's email address and a short environment note (working directory, platform, OS version, date, model ID) to the decision session. Neither contains experiment data. `--bare` mode, which avoids them, requires `ANTHROPIC_API_KEY` and is not used by this adapter yet.
 
 ## Optional isolated EDA environment
 

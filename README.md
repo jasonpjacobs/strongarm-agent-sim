@@ -15,7 +15,7 @@ The circuit is an 11-transistor StrongArm latch using SKY130 1.8 V devices. A +4
 - Python **3.11+** on Linux or macOS. Windows users should run the whole project in a Linux/WSL environment; native Windows pipe handling is not supported.
 - The **ngspice executable and shared library** (`libngspice.so` on Linux, `libngspice.dylib` on macOS). A CLI-only installation is insufficient. This project uses `ngSpice_Init`, `ngSpice_Init_Sync` and external voltage-source callbacks. [Shared ngspice documentation](https://ngspice.sourceforge.io/shared.html).
 - An installed **ngspice-compatible SKY130A PDK**, including the complete include tree rooted at `libs.tech/ngspice/sky130.lib.spice`. An [open_pdks installation](https://github.com/fossi-foundation/open-pdks) is the tested format. PDK files are not bundled or downloaded by setup.
-- For fresh AI decisions: an authenticated **Codex CLI** with access to a model you select. The adapter was originally exercised with Codex CLI 0.163.0 and GPT-6 Astra; model access is account-dependent. `doctor --ai` checks required CLI options. [Official Codex installation and authentication documentation](https://learn.chatgpt.com/docs/codex/cli).
+- For fresh AI decisions, one of two providers: an authenticated **Claude Code CLI** (`--provider claude`, see [docs/setup.md](docs/setup.md#claude-code)), or an authenticated **Codex CLI** with access to a model you select. The adapter was originally exercised with Codex CLI 0.163.0 and GPT-6 Astra; model access is account-dependent. `doctor --ai` checks required CLI options. [Official Codex installation and authentication documentation](https://learn.chatgpt.com/docs/codex/cli).
 - Optional: Matplotlib for PNG plots; Xschem plus the SKY130 symbols for editing the schematic. Neither is required for simulation, logs, HTML reports or replay.
 
 The core runtime uses the Python standard library. No API key is stored in this repository. See [installation details and a container example](docs/setup.md).
@@ -50,7 +50,15 @@ This executes the original 12 AI-chosen stimuli against your simulator, checks t
 
 ### Run the actual agent
 
-Authenticate Codex using its normal login flow, then:
+With Claude: log in to Claude Code normally, then configure the provider once:
+
+```sh
+./setup.sh ... --provider claude --claude /path/to/bin/claude --model claude-opus-5-5 --effort high
+./run.sh doctor --ai
+./run.sh ai --output runs/claude-demo
+```
+
+With Codex: authenticate Codex using its normal login flow, then:
 
 ```sh
 codex login
@@ -59,13 +67,13 @@ codex login
 # Inspect the initial prompt locally; zero model calls:
 ./run.sh ai --prepare-only --output runs/preflight
 
-# Sends the documented observations to the configured OpenAI/Codex service:
+# Sends the documented observations to the configured provider (OpenAI/Codex or Anthropic/Claude):
 ./run.sh ai --output runs/live-demo
 ```
 
 The default budget is 12 experiments and at most 16 model calls, including validation retries and a final stop response. The model chooses every input, including the first. Its prompt targets a 0.5 mV observed bracket and leaves strategy selection to the model. You can override `--model`, `--max-trials` and `--max-model-calls`; increasing trials also requires a sufficient model-call budget. `./run.sh ai --help` lists options. No fallback script chooses a voltage if the model fails.
 
-The model receives a circuit description, external stimulus/output measurements, sampled waveform excerpts and its own decision history. The injected offset, internal input voltages, netlist, PDK files, prior recorded results and credentials are excluded. Calls use a separate temporary directory with shell, app and plugin tools disabled. Codex authentication remains in the user's normal credential store. **The AI command uses your account and may incur model charges.** Setup, doctor, smoke, recorded runs and replay make no inference calls.
+The model receives a circuit description, external stimulus/output measurements, sampled waveform excerpts and its own decision history. The injected offset, internal input voltages, netlist, PDK files, prior recorded results and credentials are excluded. Calls use a separate empty temporary directory with tools disabled (Codex: shell, app and plugin features; Claude: no built-in tools, MCP servers, skills, settings files, CLAUDE.md or auto memory, and a scrubbed environment). Authentication remains in the provider CLI's normal credential store. The remaining trial and model-call budgets are part of each context. **The AI command uses your account and may incur model charges.** Setup, doctor, smoke, recorded runs and replay make no inference calls.
 
 ## Results, explanations and replay
 
