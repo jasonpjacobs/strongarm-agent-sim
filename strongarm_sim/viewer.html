@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StrongArm agent-in-the-simulation run</title>
+<style>
+:root {color-scheme:light dark; --bg:#fafafa; --fg:#20242a; --muted:#626a74; --line:#d3d9e0; --panel:#ffffff; --positive:#2269a6; --negative:#b76128;}
+@media(prefers-color-scheme:dark){:root{--bg:#181b20;--fg:#ebeff4;--muted:#b2bcc9;--line:#414a56;--panel:#232831;--positive:#75b5ed;--negative:#eda36e;}}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+main{max-width:1080px;margin:auto;padding:30px 24px}h1{font-size:27px;line-height:1.2;margin:0 0 10px}h2{font-size:18px;margin:0 0 10px}
+p{margin:8px 0} .muted{color:var(--muted)} .controls{display:flex;align-items:center;gap:15px;margin:22px 0}input{flex:1;min-width:90px}
+button{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:8px 12px;cursor:pointer}button:disabled{opacity:.4;cursor:default}
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:20px}.panel{padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.number{font-size:26px;font-variant-numeric:tabular-nums;margin:12px 0}.small{font-size:14px}.chart{width:100%;height:auto;margin:18px 0}
+svg text{fill:var(--muted);font:13px system-ui,sans-serif}.grid{stroke:var(--line);stroke-width:1}.mark{cursor:pointer}a{color:var(--positive)}
+@media(max-width:700px){.panels{grid-template-columns:1fr} main{padding:20px 14px} .controls{gap:8px}}
+</style>
+<main>
+<h1>StrongArm: an AI agent inside a running simulation</h1>
+<p id="summary" class="muted"></p>
+<p id="replay" class="small"></p>
+<div class="controls"><button id="previous" type="button">Previous</button><label for="step">Trial</label><input id="step" type="range" min="1" value="1"><strong id="step-label"></strong><button id="next" type="button">Next</button></div>
+<div class="panels">
+ <section class="panel"><h2>1. Model chooses while simulation is paused</h2><div id="chosen" class="number"></div><p id="pause" class="muted small"></p><p id="explanation"></p><p id="expectation" class="small muted"></p></section>
+ <section class="panel"><h2>2. Simulator applies one cycle and reports</h2><div id="decision" class="number"></div><p id="outputs"></p><p id="measurements" class="small"></p><p id="next-choice" class="small muted"></p></section>
+</div>
+<svg id="chart" class="chart" viewBox="0 0 960 260" role="img" aria-label="AI-selected external differential stimulus by trial"></svg>
+<h2>Model's final conclusion</h2><p id="conclusion"></p>
+<p class="small muted">Replay applies recorded requests without calling the model. This viewer reads saved evidence; it does not launch simulations or network requests.</p>
+<p><a href="decisions.jsonl">Decision journal</a> · <a href="verification.json">Simulation and replay evidence</a> · <a href="provenance-audit.json">Model-to-stimulus provenance audit</a></p>
+</main>
+<script id="run-data" type="application/json">__RUN_DATA__</script>
+<script>
+const data=JSON.parse(document.getElementById('run-data').textContent), rows=data.history;
+const get=id=>document.getElementById(id), slider=get('step');
+slider.max=rows.length;
+get('summary').textContent=[...new Set(data.runtime_models)].join(', ')+': '+data.ai_selected_trials+' AI-selected trials, '+data.model_calls+' model calls, one continuous transient.';
+get('replay').textContent='Verified replay: '+data.replay.identical_points.toLocaleString()+' identical accepted samples; no model calls during replay.';
+get('conclusion').textContent=data.final_model_response.explanation;
+function show(){
+ const index=Number(slider.value)-1,h=rows[index],o=h.result.trial;
+ get('step-label').textContent=(index+1)+' / '+rows.length;
+ get('previous').disabled=index===0;get('next').disabled=index===rows.length-1;
+ get('chosen').textContent=h.proposal.diff_mV.toFixed(6)+' mV';
+ get('pause').textContent='Epoch '+h.proposal.based_on_epoch+' · simulation time '+(h.proposal.based_on_epoch*20)+' ns · unchanged during '+h.inference_wall_seconds.toFixed(2)+' s of inference';
+ get('explanation').textContent=h.proposal.explanation;
+ get('expectation').textContent='Expected learning: '+h.proposal.expected_observation;
+ get('decision').textContent=o.decision===null?'Unresolved':o.decision===1?'OUTP high · decision 1':'OUTN high · decision 0';
+ get('outputs').textContent='OUTP '+o.outp_V.toFixed(6)+' V · OUTN '+o.outn_V.toFixed(6)+' V';
+ get('measurements').textContent='Observed at '+(h.result.time_s*1e9).toFixed(3)+' ns. Decision delay '+(o.decision_delay_s===null?'unresolved':(o.decision_delay_s*1e9).toFixed(3)+' ns')+'. Minimum precharge '+o.reset_min_V.toFixed(4)+' V.';
+ get('next-choice').textContent=index+1<rows.length?'This measurement was included in the next model call, which chose '+rows[index+1].proposal.diff_mV+' mV.':'This measurement was included in the final model call, which chose to stop.';
+ chart(index);
+}
+function chart(selected){
+ const svg=get('chart'),ns='http://www.w3.org/2000/svg';svg.replaceChildren();
+ const add=(name,attrs,text)=>{const n=document.createElementNS(ns,name);Object.entries(attrs).forEach(([k,v])=>n.setAttribute(k,v));if(text!==undefined)n.textContent=text;svg.appendChild(n);return n;};
+ const x=i=>70+i*820/Math.max(1,rows.length-1),y=v=>30+(100-v)*.8;
+ [-100,-50,0,50,100].forEach(v=>{add('line',{x1:65,x2:910,y1:y(v),y2:y(v),class:'grid'});add('text',{x:55,y:y(v)+4,'text-anchor':'end'},v);});
+ add('text',{x:70,y:15},'External differential input (mV)');
+ rows.forEach((h,i)=>{const color=h.result.trial.decision===1?'var(--positive)':'var(--negative)';const mark=add('circle',{cx:x(i),cy:y(h.proposal.diff_mV),r:i===selected?8:5,fill:color,class:'mark',tabindex:0,role:'button','aria-label':'Trial '+(i+1)+', '+h.proposal.diff_mV+' millivolts'});const title=document.createElementNS(ns,'title');title.textContent='Trial '+(i+1)+': '+h.proposal.diff_mV+' mV, decision '+h.result.trial.decision;mark.appendChild(title);mark.onclick=()=>{slider.value=i+1;show();};mark.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();slider.value=i+1;show();}};add('text',{x:x(i),y:216,'text-anchor':'middle'},i+1);});
+ add('text',{x:480,y:245,'text-anchor':'middle'},'Trial / clock cycle');
+}
+get('previous').onclick=()=>{slider.value=Number(slider.value)-1;show();};get('next').onclick=()=>{slider.value=Number(slider.value)+1;show();};slider.oninput=show;show();
+</script>
+</html>

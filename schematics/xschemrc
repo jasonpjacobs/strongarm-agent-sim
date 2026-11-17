@@ -1,0 +1,5 @@
+source $env(SKY130_XSCHEM_RC)
+append XSCHEM_LIBRARY_PATH :[file dirname [file normalize [info script]]]
+set netlist_type spice
+set netlist_dir [file join [file dirname [file normalize [info script]]] ../runs/xschem]
+file mkdir $netlist_dir

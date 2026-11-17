@@ -1,0 +1,15 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "action": {"type": "string", "enum": ["trial", "stop"]},
+    "based_on_epoch": {"type": "integer"},
+    "diff_mV": {"type": ["number", "null"]},
+    "evidence_epochs": {"type": "array", "items": {"type": "integer"}},
+    "explanation": {"type": "string"},
+    "expected_observation": {"type": "string"},
+    "threshold_low_mV": {"type": ["number", "null"]},
+    "threshold_high_mV": {"type": ["number", "null"]}
+  },
+  "required": ["action", "based_on_epoch", "diff_mV", "evidence_epochs", "explanation", "expected_observation", "threshold_low_mV", "threshold_high_mV"]
+}
