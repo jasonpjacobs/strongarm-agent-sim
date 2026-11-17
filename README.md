@@ -6,6 +6,8 @@ The circuit is an 11-transistor StrongArm latch using SKY130 1.8 V devices. A +4
 
 **The live AI command has no scripted stimulus policy.** Python checks bounds, validates evidence references, translates units and calls the simulator. A separate `recorded` command reuses decisions from the original demonstration and is explicitly labeled as having no fresh inference.
 
+**Interactive explainer:** open [docs/index.html](docs/index.html) in a browser to explore the original measured waveforms, stimulus stem plot and expandable model responses. It works offline with no setup. See [GitHub Pages instructions](docs/pages.md) to publish the same files from this repository's `/docs` folder.
+
 ![StrongArm circuit](docs/circuit.png)
 
 ## Requirements
@@ -97,6 +99,8 @@ Replay uses saved actions, not fresh model inference. Exact numerical reproducti
 The recorded demonstration on November 17, 2026 used 13 GPT-6 Astra calls: 12 stimulus choices and a final stop. It found an external threshold bracket of **[−43.359375, −42.968750] mV**. It used the final experiment to repeat the upper endpoint after the opposite preceding decision. The original live/replay pair matched **48,603 accepted samples**. These are historical results; a fresh model run may choose a different strategy or stop earlier.
 
 The supplied [recording](examples/recorded-session.json) retains numeric proposals and explanations, expected decisions and the original result summary. Host paths, session identifiers and full CLI logs are omitted. It is a portable reproduction fixture, not a cryptographic attestation of the original service calls.
+
+The [web explainer](docs/index.html) includes a separate sanitized export of the original run: all accepted waveform samples, public measurements, model responses and inference durations. Visitors can select any of the 12 stimuli or the final stop, zoom into a clock cycle or decision edge, and download the displayed dataset. No simulation or model service runs in the page.
 
 ## Architecture and scope
 

@@ -39,3 +39,9 @@ The image digest is an ARM64 reference, not an instruction to use an incompatibl
 Unit tests reject stale evidence, invalid/nonfinite amplitudes, fabricated bracket endpoints and missing references to the latest observation. They check that the offset/internal-input fields are excluded from model contexts and that a non-midpoint model choice is preserved exactly. Measurement tests reject incomplete precharge, wrong applied stimuli, unresolved outputs and brief output glitches. Portability tests cover recursive include hashing, missing include detection, canonical netlist identity after changing the PDK path and sanitized recording contents.
 
 The integration smoke test additionally exercises request idempotency, stale/conflicting requests, no state change on rejection, and wall-clock isolation. Actual experiment/replay comparisons require identical full observations and accepted waveform history, not merely similar plots or matching final voltages.
+
+## Static explainer
+
+The GitHub Pages site was checked in a browser at desktop and 390 px mobile widths, served from a `/docs/` subpath. Verification covered selecting numbered decisions and plotted stems, full-run/cycle/decision-edge views, expandable response JSON, the final stop call, and downloading the dataset. The mobile page had no horizontal overflow; browser checks reported no JavaScript errors. OUTN uses 40% transparency (60% opacity).
+
+The Python suite now has **20 passing tests on the macOS host**. Three added data checks compare every published response and polarity with the portable recording, verify all 48,603 samples and applied amplitudes, and check that private metadata is excluded. The site JavaScript also passes `node --check`. This website work made no new inference calls and did not change simulator code.

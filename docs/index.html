@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore a real AI-in-the-simulation experiment: a model chooses inputs for a SKY130 StrongArm latch, observes its outputs, and records every decision for exact replay.">
+  <meta name="theme-color" content="#173e3b">
+  <title>An agent inside the simulation · StrongArm experiment</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/explainer.css">
+  <script defer src="assets/experiment.js"></script>
+  <script defer src="assets/explainer.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#explore">Skip to the experiment</a>
+<header class="masthead wrap">
+  <a class="wordmark" href="#top"><span class="wordmark-symbol" aria-hidden="true">∿</span> STRONGARM / LAB NOTES</a>
+  <nav aria-label="Main"><a href="#experiment">The experiment</a><a href="#explore">Explore the run</a><a href="#reproduce">Reproduce it</a></nav>
+</header>
+<main id="top">
+  <section class="hero wrap" aria-labelledby="title">
+    <div class="hero-copy">
+      <p class="eyebrow">AGENT-IN-THE-SIMULATION · EXPERIMENT 01</p>
+      <h1 id="title">What if the next input <br>was an <em>AI decision?</em></h1>
+      <p class="lede">A running circuit. A model that observes its outputs.<br class="wide-only"> And a new experiment chosen at every pause.</p>
+      <a class="button primary" href="#explore">Explore the recorded run <span aria-hidden="true">↓</span></a>
+    </div>
+    <figure class="loop-figure" aria-label="The experiment loop: simulate one clock cycle, observe the outputs, ask the AI for the next input, then resume the same simulation.">
+      <div class="loop-top"><span class="dot"></span> ONE CONTINUOUS TRANSIENT</div>
+      <div class="loop-node"><span class="step-number">01</span><div><strong>Simulate</strong><span>Advance one 20 ns clock cycle</span></div><span class="node-tag">ngspice</span></div>
+      <div class="loop-connector" aria-hidden="true">↓</div>
+      <div class="loop-node"><span class="step-number">02</span><div><strong>Observe</strong><span>Pause. Read the latch’s decision.</span></div><span class="node-tag">API</span></div>
+      <div class="loop-connector" aria-hidden="true">↓</div>
+      <div class="loop-node model-node"><span class="step-number">03</span><div><strong>Decide</strong><span>The model chooses the next input</span></div><span class="node-tag">AI</span></div>
+      <div class="loop-return">↳ Apply the input and resume the same transient</div>
+    </figure>
+  </section>
+  <div class="facts wrap" aria-label="Recorded experiment results">
+    <div><strong>12</strong><span>AI-chosen experiments</span></div>
+    <div><strong>240 <small>ns</small></strong><span>of continuous simulation</span></div>
+    <div><strong>48,603</strong><span>samples reproduced in replay</span></div>
+    <div><strong>0</strong><span>model calls during replay</span></div>
+  </div>
+
+  <section class="intro wrap section" id="experiment" aria-labelledby="experiment-title">
+    <div><p class="eyebrow">THE QUESTION</p><h2 id="experiment-title">Can a model find <br>a hidden offset?</h2></div>
+    <div class="intro-body">
+      <p>A StrongArm latch compares two voltages each time its clock rises. We added a <strong>fixed +43 mV source</strong> to its positive input. The model was not told that value. It chose the external differential input, observed which output won, and decided what to try next.</p>
+      <p>GPT-6 Astra made every stimulus choice, including the first. Python validated and applied those choices. The model chose bisection, then spent its final trial checking whether a previous decision affected the result.</p>
+      <dl class="conditions"><div><dt>Devices</dt><dd>SKY130 · 11 transistors</dd></div><div><dt>Corner</dt><dd>TT · 27 °C</dd></div><div><dt>Supply / common mode</dt><dd>1.8 V / 0.9 V external</dd></div><div><dt>Clock / output load</dt><dd>50 MHz / 10 fF per output</dd></div></dl>
+      <details class="circuit-disclosure"><summary>See the latch schematic <span aria-hidden="true">+</span></summary><img src="circuit.png" alt="The 11-transistor SKY130 StrongArm latch: differential input pair, clocked tail, cross-coupled regenerative devices and four precharge transistors." loading="lazy" width="1800" height="1178"><p class="caption">The +43 mV series source is added outside this core, at its positive input. It raises the actual input-pair common mode by 21.5 mV.</p></details>
+    </div>
+  </section>
+
+  <section class="explorer section" id="explore" aria-labelledby="explore-title">
+    <div class="wrap">
+      <div class="section-heading"><div><p class="eyebrow">THE RECORDED EXPERIMENT</p><h2 id="explore-title">Follow the model’s choices.</h2></div><p class="section-note">Select a stem or a decision number. <br>The waveforms and response stay in sync.</p></div>
+      <noscript><p class="notice">Enable JavaScript to explore the recorded waveforms and decisions. The experiment description and setup guide remain available without it.</p></noscript>
+      <div id="data-error" class="notice" role="alert" hidden></div>
+      <div class="decision-navigation" aria-label="Choose a model decision">
+        <button id="previous" class="icon-button" type="button" aria-label="Previous decision">←</button>
+        <div id="decision-buttons" class="decision-buttons"></div>
+        <button id="next" class="icon-button" type="button" aria-label="Next decision">→</button>
+      </div>
+      <div class="explorer-grid">
+        <div class="plots">
+          <figure class="plot-panel">
+            <div class="plot-heading"><div><h3>Measured waveforms</h3><p id="wave-range" class="plot-subtitle">0–240 ns · entire run</p></div><div class="segmented" role="group" aria-label="Waveform time range"><button type="button" data-view="run" aria-pressed="true">Full run</button><button type="button" data-view="cycle" aria-pressed="false">One cycle</button><button type="button" data-view="edge" aria-pressed="false">Decision edge</button></div></div>
+            <div class="legend wave-legend"><span><i class="swatch clock"></i>Clock</span><span><i class="swatch positive"></i>OUTP</span><span title="40% transparency"><i class="swatch negative"></i>OUTN</span><span><i class="swatch input"></i>External input ΔV</span></div>
+            <div class="canvas-box"><canvas id="waveforms" role="img" aria-label="Measured clock, complementary output voltages and external differential input versus simulation time"></canvas><output id="wave-cursor" class="chart-tooltip" hidden></output></div>
+            <figcaption id="wave-caption">The highlighted interval is the selected experiment. Clock low resets both outputs high; clock high lets the latch decide.</figcaption>
+          </figure>
+          <figure class="plot-panel stem-panel">
+            <div class="plot-heading"><div><h3>AI-applied input offset</h3><p class="plot-subtitle">External differential stimulus, ΔV = VINP<sub>external</sub> − VINN</p></div><span class="fixed-offset">Fixed device offset <strong>+43 mV</strong></span></div>
+            <div class="legend"><span>Measured outcome:</span><span><i class="swatch positive"></i>OUTP wins · 1</span><span><i class="swatch negative"></i>OUTN wins · 0</span></div>
+            <div class="canvas-box"><canvas id="stems" role="img" aria-label="Stem plot of the AI-chosen external differential input in millivolts at each simulation-time decision boundary"></canvas><output id="stem-cursor" class="chart-tooltip" hidden></output></div>
+            <figcaption>Each stem is a model choice at a pause boundary; it is applied 2 ns into the next reset phase. The dashed −43 mV line would cancel the fixed source.</figcaption>
+          </figure>
+        </div>
+        <aside class="response-panel" aria-labelledby="response-heading">
+          <div class="response-top"><span class="eyebrow" id="call-number">MODEL CALL 01 / 13</span><span class="recorded-label">RECORDED</span></div>
+          <h3 id="response-heading">Choose the first input</h3>
+          <p class="chosen-value" id="chosen-value">−100 <span>mV</span></p>
+          <dl class="timing"><div><dt>Simulation paused at</dt><dd id="paused-time">0 ns</dd></div><div><dt>Model inference took</dt><dd id="inference-time">8.53 s</dd></div></dl>
+          <p class="pause-note">Simulation time does not advance while the model responds.</p>
+          <details class="model-disclosure" id="model-disclosure" open>
+            <summary>Model’s response <span aria-hidden="true">+</span></summary>
+            <div class="model-copy"><p id="model-explanation"></p><h4>Expected observation</h4><p id="expected-observation"></p><h4>Evidence used</h4><p id="evidence-used"></p><details class="raw-disclosure"><summary>View exact JSON</summary><pre id="raw-response"></pre></details></div>
+          </details>
+          <div class="outcome"><p class="eyebrow" id="outcome-label">AFTER THIS EXPERIMENT</p><p id="outcome-title"></p><dl id="outcome-metrics"></dl></div>
+          <div class="bracket"><p class="eyebrow">OBSERVED BRACKET AFTER THIS STEP</p><strong id="bracket-value">Not established yet</strong><p id="bracket-width"></p></div>
+        </aside>
+      </div>
+      <p id="selection-announcement" class="sr-only" aria-live="polite"></p>
+      <div class="plot-footnote"><span class="status-dot" aria-hidden="true"></span><p>Original measured data: all 48,603 accepted samples are included. Charts preserve minima and maxima when reducing points for the display. This page explores a saved run; it makes no model calls.</p></div>
+    </div>
+  </section>
+
+  <section class="takeaway wrap section" aria-labelledby="takeaway-title">
+    <div><p class="eyebrow">WHAT HAPPENED</p><h2 id="takeaway-title">The model found the boundary. <br>Then it challenged the result.</h2></div>
+    <div><p>After establishing opposite decisions, the model narrowed the external threshold to <strong>−43.359375 to −42.968750 mV</strong>—a 0.390625 mV interval containing the expected −43 mV cancellation point.</p><p>It used experiment 12 to repeat the upper endpoint after the opposite preceding decision. OUTP won again. The next model call chose to stop and stated what remained unmeasured.</p><a class="text-link" id="show-recheck" href="#explore">Inspect the final recheck <span aria-hidden="true">↗</span></a></div>
+  </section>
+  <section class="replay-section wrap" aria-labelledby="replay-title"><div class="replay-number">48,603<span>accepted samples, reproduced exactly</span></div><div><p class="eyebrow">REPLAY, WITHOUT INFERENCE</p><h2 id="replay-title">Save the decisions. <br>Replay the experiment.</h2><p>A second ngspice worker applied the recorded actions and reproduced every accepted timepoint, waveform value and returned observation in the same environment. It made zero model calls. Fresh AI runs may choose different experiments; action replay preserves what actually happened.</p></div></section>
+  <section class="reproduce wrap section" id="reproduce" aria-labelledby="reproduce-title"><div><p class="eyebrow">TRY IT YOURSELF</p><h2 id="reproduce-title">Bring your simulator. <br>Keep the experiment.</h2><p>The repository includes configurable setup, the circuit, a recording, an AI controller, and replay checks. SKY130 model files and credentials stay in your own installation.</p><div class="resource-links"><a href="setup.md">Installation guide ↗</a><a href="architecture.md">API &amp; synchronization ↗</a><a href="pages.md">Host this explainer ↗</a></div></div><div class="code-card"><span>From the configured repository</span><pre><code><span class="code-comment"># Replay the recording · no model calls</span>
+./run.sh recorded
+
+<span class="code-comment"># Let an actual model choose each input</span>
+./run.sh ai --output runs/live-demo
+
+<span class="code-comment"># Replay that run without inference</span>
+./run.sh replay runs/live-demo/live \
+  --output runs/replay-again</code></pre></div></section>
+  <footer class="wrap"><p>StrongArm Agent Sim · MIT licensed · Recorded November 17, 2026</p><p>Nominal TT simulation with a synthetic fixed offset. No random mismatch, transient noise, layout parasitics or ISF characterization. The model controls amplitude; the API fixes cycle timing.</p><button id="download-data" type="button" class="text-button">Download the plotted data and model responses ↓</button></footer>
+</main>
+</body>
+</html>
