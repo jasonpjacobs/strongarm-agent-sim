@@ -18,8 +18,22 @@ def forbidden_keys(obj):
         for item in obj:
             yield from forbidden_keys(item)
 
+def runtime_identity(folder):
+    path = folder/'runtime.json'
+    if path.is_file():
+        return json.loads(path.read_text())
+    # Runs made before runtime.json existed: Codex CLI runtime log lines.
+    runtime = (folder/'stderr.log').read_text()
+    model = re.search(r'(?m)^model:\s*(.+)$', runtime)
+    service = re.search(r'(?m)^provider:\s*(.+)$', runtime)
+    return dict(provider='openai-codex-cli', model=model and model[1].strip(),
+                service=service and service[1].strip())
+
 def audit(base):
     base = Path(base)
+    manifest_provider = json.loads((base/'agent-manifest.json').read_text())['provider']
+    if manifest_provider == 'codex-cli':
+        manifest_provider = 'openai-codex-cli'
     log = events(base/'decisions.jsonl')
     inputs = {e['call']:e for e in log if e['kind'] == 'model_input'}
     proposals = {e['call']:e for e in log if e['kind'] == 'model_proposal'}
@@ -33,11 +47,17 @@ def audit(base):
         folder = base/f'call-{call:02d}'
         response = json.loads((folder/'response.json').read_text())
         assert response == e['proposal'] == proposals[call]['proposal']
-        runtime = (folder/'stderr.log').read_text()
-        model = re.search(r'(?m)^model:\s*(.+)$', runtime)
-        provider = re.search(r'(?m)^provider:\s*(.+)$', runtime)
-        assert model and provider and provider[1].strip() == 'openai'
-        models.add(model[1].strip())
+        runtime = runtime_identity(folder)
+        assert runtime['provider'] == manifest_provider, 'Call provider differs from run manifest'
+        assert runtime['model'], 'Runtime model was not identified'
+        if runtime['provider'] == 'openai-codex-cli':
+            assert runtime.get('service') == 'openai'
+        elif runtime['provider'] == 'anthropic-claude-code-cli':
+            assert set(runtime['session_tools']) <= {'StructuredOutput'} and not runtime['mcp_servers']
+            assert runtime['model'] in runtime['models_billed']
+        else:
+            raise AssertionError('Unknown provider '+runtime['provider'])
+        models.add(runtime['model'])
         assert proposals[call]['parked_observation_unchanged']
         assert proposals[call]['before'] == proposals[call]['after']
         assert not list(forbidden_keys(inputs[call]['context'])), 'Withheld data leaked into model context'
@@ -54,7 +74,7 @@ def audit(base):
     report = json.loads((base/'verification.json').read_text())
     assert report['replay']['status'] == 'PASS' and report['replay']['model_calls'] == 0
     assert report['replay']['replayed_trials'] == len(actions)
-    result = dict(status='PASS', runtime_models=sorted(models), independently_matched_trials=len(actions),
+    result = dict(status='PASS', provider=manifest_provider, runtime_models=sorted(models), independently_matched_trials=len(actions),
                   model_calls=len(inputs), separate_model_response_for_every_trial=True,
                   every_model_wait_preserved_solver_state=True, withheld_context_fields_absent=True,
                   no_scripted_bootstrap_or_fallback=True, replay_model_calls=0)

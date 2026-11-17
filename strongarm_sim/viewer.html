@@ -34,7 +34,7 @@ svg text{fill:var(--muted);font:13px system-ui,sans-serif}.grid{stroke:var(--lin
 const data=JSON.parse(document.getElementById('run-data').textContent), rows=data.history;
 const get=id=>document.getElementById(id), slider=get('step');
 slider.max=rows.length;
-get('summary').textContent=[...new Set(data.runtime_models)].join(', ')+': '+data.ai_selected_trials+' AI-selected trials, '+data.model_calls+' model calls, one continuous transient.';
+get('summary').textContent=(data.provider?data.provider+' · ':'')+[...new Set(data.runtime_models)].join(', ')+': '+data.ai_selected_trials+' AI-selected trials, '+data.model_calls+' model calls, one continuous transient.';
 get('replay').textContent='Verified replay: '+data.replay.identical_points.toLocaleString()+' identical accepted samples; no model calls during replay.';
 get('conclusion').textContent=data.final_model_response.explanation;
 function show(){
