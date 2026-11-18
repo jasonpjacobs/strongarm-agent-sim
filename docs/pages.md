@@ -24,7 +24,7 @@ The waveform buttons switch between the full 240 ns run, the selected 20 ns cycl
 3. Choose **Deploy from a branch**, select the branch containing these files, and choose **`/docs`** as the folder. Save.
 4. Open the Pages URL GitHub reports after deployment completes.
 
-See GitHub's [publishing-source documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). The site uses relative asset URLs, so it works at a project URL such as `https://YOUR_NAME.github.io/YOUR_REPOSITORY/` as well as at a custom-domain root. `docs/.nojekyll` requests static serving. No workflow, API token, CDN, analytics or external fonts are needed. Markdown guide links open the source text; GitHub Pages does not render those files when Jekyll is disabled.
+See GitHub's [publishing-source documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site). The site uses relative asset URLs, so it works at a project URL such as `https://YOUR_NAME.github.io/YOUR_REPOSITORY/` as well as at a custom-domain root. `docs/.nojekyll` requests static serving. No workflow, API token, CDN or external fonts are needed. The published copy loads [GoatCounter](https://www.goatcounter.com/) for cookie-free page-view counts; remove its `<script>` from `index.html` if you host your own copy. Markdown guide links open the source text; GitHub Pages does not render those files when Jekyll is disabled.
 
 Only publish `docs/`. Local configuration, credentials, PDK files and private run directories do not belong in the site. The checked-in dataset was exported through an explicit allowlist.
 
