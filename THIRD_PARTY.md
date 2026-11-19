@@ -9,5 +9,6 @@ This repository's authored source, circuit description, schematics, documentatio
 - [IIC-OSIC-TOOLS](https://github.com/iic-jku/IIC-OSIC-TOOLS): optional external EDA environment used for validation; not redistributed here.
 - [Codex CLI](https://github.com/openai/codex): external model client. Hosted model service usage is subject to the user's account and service terms. No client binaries, authentication files or tokens are distributed.
 - [Matplotlib](https://matplotlib.org/): optional plotting dependency, installed separately when requested.
+- [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk): separately installed dependency of the optional general-purpose MCP server. Its license and dependency notices remain applicable; no SDK source is vendored here.
 
 `examples/recorded-session.json` is a sanitized historical recording, retaining numeric proposals and concise model-provided experiment explanations. It excludes original machine paths, session identifiers and raw client logs.

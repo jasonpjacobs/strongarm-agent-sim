@@ -1,5 +1,47 @@
 # Validation record
 
+## General-purpose MCP server — November 19, 2026
+
+The optional MCP server was tested through an actual SDK stdio client and
+libngspice, using both a clock-free RC circuit and the SKY130 StrongArm fixture.
+The server contains no StrongArm timing or classification logic.
+
+| Check | Result |
+| --- | --- |
+| Unit suite | 32 passed on macOS and in a fresh Linux source copy; includes all 20 prior tests |
+| MCP discovery | All eight tools returned input/output schemas and structured results |
+| Clock-free RC | Arbitrary 2.345 µs barrier; response agreed with the analytic solution within 20 µV |
+| Voltage/current controls | Input-voltage ramp and subsequent load-current ramp both exercised |
+| RC exact replay | 658 accepted samples and all observations matched |
+| SKY130 StrongArm | All 12 historical stimulus decision polarities reproduced |
+| StrongArm exact replay, Sparse | 48,659 accepted samples and all observations matched |
+| StrongArm exact replay, KLU | 48,659 accepted samples and all observations matched |
+| Request handling | Identical retries, conflicting IDs, stale epochs, concurrent mutations and invalid atomic batches checked |
+| Waveform retrieval | Raw pages matched the complete logged history; reduced results respected their budget |
+| Lifecycle | Independent workers, orderly disconnect cleanup, and exact replay after server restart verified |
+| Failure handling | Altered provenance and failed/sample-exhausted runs rejected by replay |
+| Fresh setup | SDK installed by `setup-mcp.sh` with no PDK/model-client requirement; `mcp.sh` launched from a source-copy path containing spaces |
+
+The clean-copy test reran the full RC/StrongArm sequence through `mcp.sh` and its
+generated configuration. It left no worker processes running. The test client
+uses recorded AI choices and makes **zero fresh model calls**. Model access
+through an external MCP host has not been exercised as part of this change.
+
+This worker establishes its own replay baseline. Its timestep boundaries differ
+slightly from the original clock-specific worker, so its 48,659-point count
+should not be confused with the historical 48,603-point recording. Both generic
+solver configurations reproduced the recorded decision polarities. The generic
+worker uses a relative boundary tolerance to prevent tiny accumulated rounding
+residuals from collapsing ngspice's timestep.
+
+Environment: Linux ARM64, Python 3.12.3, official MCP SDK 2.3.0, ngspice 47,
+the IIC-OSIC-TOOLS image and SKY130A models described below. Full native macOS
+simulation remains untested. Event stopping is a documented design only and
+was not advertised or tested as an implemented capability. The legacy simulator
+and published explainer data were not changed.
+
+## Original distribution — November 17, 2026
+
 Validated November 17, 2026.
 
 ## Standalone distribution

@@ -1,5 +1,6 @@
 .local/
 .venv/
+.venv-mcp/
 runs/
 dist/
 __pycache__/

@@ -10,6 +10,24 @@ The circuit is an 11-transistor StrongArm latch using SKY130 1.8 V devices. A +4
 
 ![StrongArm circuit](docs/circuit.png)
 
+## General-purpose MCP server
+
+The repository also includes a **clock-independent ngspice MCP prototype**.
+An MCP-connected agent can advance to arbitrary absolute times, change external
+voltage/current sources, retrieve waveform history, and replay its recorded
+actions. A clock-free RC circuit and the StrongArm recording exercise the same
+server; all latch timing and classification remain in the test client.
+
+```sh
+./setup-mcp.sh --ngspice-library /path/to/libngspice.so
+# Configure your MCP host to launch /absolute/path/to/this/repo/mcp.sh.
+```
+
+See [setup, tools, synchronization and replay](docs/mcp.md) and the
+[planned event-stopping feature](docs/event-stopping.md). Event stopping is not
+yet implemented. This optional server uses the official MCP Python SDK; the
+original experiment commands below retain their existing runtime and log format.
+
 ## Requirements
 
 - Python **3.11+** on Linux or macOS. Windows users should run the whole project in a Linux/WSL environment; native Windows pipe handling is not supported.
@@ -18,7 +36,7 @@ The circuit is an 11-transistor StrongArm latch using SKY130 1.8 V devices. A +4
 - For fresh AI decisions: an authenticated **Codex CLI** with access to a model you select. The adapter was originally exercised with Codex CLI 0.163.0 and GPT-6 Astra; model access is account-dependent. `doctor --ai` checks required CLI options. [Official Codex installation and authentication documentation](https://learn.chatgpt.com/docs/codex/cli).
 - Optional: Matplotlib for PNG plots; Xschem plus the SKY130 symbols for editing the schematic. Neither is required for simulation, logs, HTML reports or replay.
 
-The core runtime uses the Python standard library. No API key is stored in this repository. See [installation details and a container example](docs/setup.md).
+The original experiment runtime uses the Python standard library. No API key is stored in this repository. See [installation details and a container example](docs/setup.md).
 
 ## Quick start
 
@@ -104,7 +122,7 @@ The [web explainer](docs/index.html) includes a separate sanitized export of the
 
 ## Architecture and scope
 
-See [the API and synchronization design](docs/architecture.md). This is a nominal TT/27 °C, noiseless schematic demonstration, with ideal sources and 10 fF output loads. The model controls differential amplitude; clock/reset/measurement timing is fixed by the API. A series offset source raises the actual input-pair common mode by 21.5 mV. Random mismatch, offset distributions, ISF, kickback into realistic source impedances and layout extraction are outside this experiment.
+See [the original experiment API and synchronization design](docs/architecture.md). This is a nominal TT/27 °C, noiseless schematic demonstration, with ideal sources and 10 fF output loads. In that original API, the model controls differential amplitude and clock/reset/measurement timing is fixed. The separate general MCP server imposes none of those timing choices. A series offset source raises the actual input-pair common mode by 21.5 mV. Random mismatch, offset distributions, ISF, kickback into realistic source impedances and layout extraction are outside this experiment.
 
 The schematic is provided in `schematics/`; `./run.sh schematic` opens it when Xschem is configured. The checked-in `circuits/strongarm.spice` is the simulation source and preserves the verified schematic's device connections and sizes. Editing the schematic does not silently regenerate that netlist.
 
